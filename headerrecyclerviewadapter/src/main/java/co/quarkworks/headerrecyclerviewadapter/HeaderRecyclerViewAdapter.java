@@ -21,7 +21,7 @@ import java.util.List;
  * @author berbschloe@quarkworks.co
  */
 @SuppressWarnings({"UnusedParameters", "unused"})
-public abstract class HeaderRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public abstract class HeaderRecyclerViewAdapter<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private static final String TAG = HeaderRecyclerViewAdapter.class.getSimpleName();
 
     @NonNull
@@ -197,9 +197,9 @@ public abstract class HeaderRecyclerViewAdapter extends RecyclerView.Adapter<Rec
         Abstract Methods
      */
 
-    public abstract RecyclerView.ViewHolder onCreateRowViewHolder(ViewGroup parent, int viewType);
+    public abstract VH onCreateRowViewHolder(ViewGroup parent, int viewType);
 
-    public abstract void onBindRowViewHolder(RecyclerView.ViewHolder holder, int position);
+    public abstract void onBindRowViewHolder(VH holder, int position);
 
     public abstract int getRowCount();
 
@@ -207,7 +207,7 @@ public abstract class HeaderRecyclerViewAdapter extends RecyclerView.Adapter<Rec
         Optional
      */
 
-    public void onBindRowViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+    public void onBindRowViewHolder(VH holder, int position, List<Object> payloads) {
         onBindRowViewHolder(holder, position);
     }
 
@@ -219,19 +219,19 @@ public abstract class HeaderRecyclerViewAdapter extends RecyclerView.Adapter<Rec
         return RecyclerView.NO_ID;
     }
 
-    public void onRowViewAttachedToWindow(RecyclerView.ViewHolder holder) {
+    public void onRowViewAttachedToWindow(VH holder) {
         //Stub
     }
 
-    public void onRowViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
+    public void onRowViewDetachedFromWindow(VH holder) {
         //Stub
     }
 
-    public void onRowViewRecycled(RecyclerView.ViewHolder holder) {
+    public void onRowViewRecycled(VH holder) {
         //Stub
     }
 
-    public boolean onFailedToRecycleRowView(RecyclerView.ViewHolder holder) {
+    public boolean onFailedToRecycleRowView(VH holder) {
         return false;
     }
 
@@ -260,7 +260,9 @@ public abstract class HeaderRecyclerViewAdapter extends RecyclerView.Adapter<Rec
             return;
         }
 
-        onBindRowViewHolder(holder, position - getHeaderCount());
+        if (!isInternalViewHolder(holder)) {
+            onBindRowViewHolder((VH) holder, position - getHeaderCount());
+        }
     }
 
     @Override
@@ -269,7 +271,9 @@ public abstract class HeaderRecyclerViewAdapter extends RecyclerView.Adapter<Rec
             return;
         }
 
-        onBindRowViewHolder(convertView, position - getHeaderCount(), payloads);
+        if (!isInternalViewHolder(convertView)) {
+            onBindRowViewHolder((VH) convertView, position - getHeaderCount(), payloads);
+        }
     }
 
     @Override
@@ -303,38 +307,38 @@ public abstract class HeaderRecyclerViewAdapter extends RecyclerView.Adapter<Rec
 
     @Override @CallSuper
     public void onViewAttachedToWindow(RecyclerView.ViewHolder holder) {
-        if (holder instanceof HeaderVH || holder instanceof FooterVH) {
+        if (isInternalViewHolder(holder)) {
             return;
         }
 
-        onRowViewAttachedToWindow(holder);
+        onRowViewAttachedToWindow((VH) holder);
     }
 
     @Override @CallSuper
     public void onViewDetachedFromWindow(RecyclerView.ViewHolder holder) {
-        if (holder instanceof HeaderVH || holder instanceof FooterVH) {
+        if (isInternalViewHolder(holder)) {
             return;
         }
 
-        onRowViewDetachedFromWindow(holder);
+        onRowViewDetachedFromWindow((VH) holder);
     }
 
     @Override @CallSuper
     public void onViewRecycled(RecyclerView.ViewHolder holder) {
-        if (holder instanceof HeaderVH || holder instanceof FooterVH) {
+        if (isInternalViewHolder(holder)) {
             return;
         }
 
-        onRowViewRecycled(holder);
+        onRowViewRecycled((VH) holder);
     }
 
     @Override @CallSuper
     public boolean onFailedToRecycleView(RecyclerView.ViewHolder holder) {
-        if (holder instanceof HeaderVH || holder instanceof FooterVH) {
+        if (isInternalViewHolder(holder)) {
             return super.onFailedToRecycleView(holder);
         }
 
-        return onFailedToRecycleRowView(holder);
+        return onFailedToRecycleRowView((VH) holder);
     }
 
     private static class HeaderVH extends RecyclerView.ViewHolder {
@@ -347,5 +351,9 @@ public abstract class HeaderRecyclerViewAdapter extends RecyclerView.Adapter<Rec
         public FooterVH(View itemView) {
             super(itemView);
         }
+    }
+
+    private static boolean isInternalViewHolder(RecyclerView.ViewHolder holder) {
+        return holder instanceof HeaderVH || holder instanceof FooterVH;
     }
 }
